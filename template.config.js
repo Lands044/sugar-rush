@@ -51,7 +51,7 @@ export default {
 		pxtorem: true,
 		critical: false,
 		codesplit: true,
-		devfiles: true,
+		devfiles: false,
 	},
 	fonts: {
 		iconsfont: false,
@@ -62,7 +62,7 @@ export default {
 		optimize: {
 			enable: true,
 			edithtml: true,
-			sizes: [600, 1200],
+			sizes: [],
 			dpi: [],
 			attrignore: 'data-fls-image-ignore',
 			modernformat: {
@@ -81,7 +81,7 @@ export default {
 	},
 	js: {
 		hotmodules: true,
-		devfiles: true,
+		devfiles: false,
 		bundle: {
 			// Збирає в один JS та один CSS файли
 			// незалежно від налаштування
@@ -134,6 +134,7 @@ export default {
 		// Media & files
 		'@fonts': 'src/assets/fonts',
 		'@img': 'src/assets/img',
+		'@sound': 'src/assets/sound',
 		'@video': 'src/assets/video',
 		'@files': 'src/files',
 		// Other
