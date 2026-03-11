@@ -53,6 +53,15 @@ export function unlockAudio() {
         .catch(() => {});
 }
 
+export function unlockAudioOnNextClick() {
+    if (audioUnlocked) return;
+    const handler = () => {
+        document.removeEventListener("click", handler);
+        unlockAudio();
+    };
+    document.addEventListener("click", handler);
+}
+
 
 function playHoverSound() {
     if (bgMusic.muted || !audioUnlocked) return; // якщо звук вимкнений — мовчимо

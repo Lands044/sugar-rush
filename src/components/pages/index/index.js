@@ -1,4 +1,5 @@
 import "./sound.js";
+import { unlockAudioOnNextClick } from "./sound.js";
 import { openPopup, openAgePopup } from "./popup";
 /* ================= CONFIG ================= */
 const ROWS = 7;
@@ -44,7 +45,11 @@ let currentGrid = [];
 
 /* ================= START POPUP 18+ ================= */
 window.addEventListener("load", () => {
-    openAgePopup();
+    if (!localStorage.getItem("age_confirmed")) {
+        openAgePopup();
+    } else {
+        unlockAudioOnNextClick();
+    }
 });
 
 

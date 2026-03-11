@@ -23,7 +23,8 @@ popupBtn.addEventListener("click", (e) => {
         e.preventDefault();
 
         unlockAudio();
-        
+        localStorage.setItem("age_confirmed", "1");
+
         popup.classList.remove("show");
         popup.dataset.mode = "";
     }
