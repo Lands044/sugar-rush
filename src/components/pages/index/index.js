@@ -7,15 +7,15 @@ const MOBILE_BREAKPOINT = 767.98;
 
 const ICON_PATH = "assets/img/icon/";
 const SYMBOLS = [
-    "pic_01.png",
-    "pic_02.png",
-    "pic_03.png",
-    "pic_04.png",
-    "pic_05.png",
-    "pic_06.png",
-    "pic_07.png",
-    "pic_08.png",
-    "pic_09.png",
+    "pic_01.webp",
+    "pic_02.webp",
+    "pic_03.webp",
+    "pic_04.webp",
+    "pic_05.webp",
+    "pic_06.webp",
+    "pic_07.webp",
+    "pic_08.webp",
+    "pic_09.webp",
 ];
 
 const WIN_TYPE = {
@@ -235,7 +235,7 @@ class MobileSlotMachine {
             let found = true;
             for (let j = 0; j < targetIcons.length; j++) {
                 const src = imgs[i + j]?.getAttribute("src") || "";
-                const match = src.match(/pic_0?(\d+)\.png/);
+                const match = src.match(/pic_0?(\d+)\.webp/);
                 const num = match ? parseInt(match[1]) : -1;
                 if (num !== targetIcons[j]) { found = false; break; }
             }
