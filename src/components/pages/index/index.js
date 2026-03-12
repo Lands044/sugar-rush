@@ -96,9 +96,9 @@ class MobileSlotMachine {
                 winAmount: 50,
                 winLine: [1, 1, 1],
                 result: [
-                    [2, 3, 5],
-                    [7, 3, 2],
-                    [4, 3, 8],
+                    [2, 4, 5],
+                    [7, 4, 2],
+                    [4, 4, 8],
                 ],
             },
             {
@@ -246,28 +246,34 @@ class MobileSlotMachine {
 
     showResult(result) {
         if (result.type === "bigwin" || result.type === "smallwin") {
-            if (result.winLine) this.drawWinBorder(result.winLine);
+            if (result.winLine) this.highlightWin(result.winLine);
 
-            const delay = result.type === "bigwin" ? 2000 : 1500;
+            const winDelay = result.type === "bigwin" ? 2000 : 1500;
+
+            // disappear анімація перед очищенням
             setTimeout(() => {
-                this.removeWinBorder();
-                spinning = false;
-                enableSpinButton();
-            }, delay);
+                this.disappearWinIcons(result.winLine);
+                setTimeout(() => {
+                    this.clearWinClasses();
+                    spinning = false;
+                    enableSpinButton();
+                }, 450);
+            }, winDelay);
         } else {
             spinning = false;
             enableSpinButton();
         }
     }
 
-    drawWinBorder(winLine) {
+    // повертає видимі drum__image для рядка winRowIndex в кожній колонці
+    getVisibleIcons(winLine) {
         const columns = this.drumSpinner.querySelectorAll(".drum__column");
         const rows = this.config.rows;
         const iconStep = this.config.getIconStep();
+        const result = [];
+
         columns.forEach((col, colIndex) => {
             const winRowIndex = winLine[colIndex];
-            if (winRowIndex === null || winRowIndex === undefined) return;
-
             const strip = col.querySelector(".drum__strip");
             const icons = strip.querySelectorAll(".drum__image");
 
@@ -279,20 +285,32 @@ class MobileSlotMachine {
             for (let i = 0; i < rows; i++) {
                 const icon = icons[visStart + i];
                 if (!icon) continue;
-                if (i === winRowIndex) {
-                    icon.classList.add("win-border-animation");
-                    this.createAnimatedBorder(icon);
-                } else {
-                    icon.classList.add("dimmed");
-                }
+                result.push({ icon, isWin: i === winRowIndex });
+            }
+        });
+
+        return result;
+    }
+
+    highlightWin(winLine) {
+        this.getVisibleIcons(winLine).forEach(({ icon, isWin }) => {
+            if (isWin) {
+                icon.classList.add("win");
+            } else {
+                icon.classList.add("dimmed");
             }
         });
     }
 
-    removeWinBorder() {
-        this.drumSpinner.querySelectorAll(".win-border-svg").forEach((svg) => svg.remove());
+    disappearWinIcons(winLine) {
+        this.getVisibleIcons(winLine).forEach(({ icon, isWin }) => {
+            if (isWin) icon.classList.add("disappear");
+        });
+    }
+
+    clearWinClasses() {
         this.drumSpinner.querySelectorAll(".drum__image").forEach((icon) => {
-            icon.classList.remove("win-border-animation", "dimmed");
+            icon.classList.remove("win", "dimmed", "disappear");
         });
     }
 

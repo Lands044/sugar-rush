@@ -366,7 +366,8 @@
 }
 
 //win contur animation
-.drum__item.win {
+.drum__item.win,
+.drum__image.win {
     position: relative;
     z-index: 2;
 
@@ -422,7 +423,8 @@
 }
 
 /* пульсація + мікрооберти */
-.drum__item.win img {
+.drum__item.win img,
+.drum__image.win img {
     animation: iconAlive 1.1s ease-in-out infinite;
     will-change: transform, filter;
     transform-origin: center;
@@ -490,7 +492,8 @@
 }
 
 //win disappear animation
-.drum__item.win.disappear {
+.drum__item.win.disappear,
+.drum__image.win.disappear {
     animation: sugarPop 0.45s ease forwards;
 }
 
