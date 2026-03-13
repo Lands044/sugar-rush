@@ -3,7 +3,19 @@
 		<include src="@components/effects/preloader/preloader.html" locals='{"once":"[[preloader.once]]"}'></include>
 	</if>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<script>
+		(function () {
+			function setAppHeight() {
+				document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+			}
+			setAppHeight();
+			window.addEventListener('resize', setAppHeight);
+			window.addEventListener('orientationchange', function () {
+				setTimeout(setAppHeight, 100);
+			});
+		})();
+	</script>
 	<include src="@components/layout/head/fonts-preload.html"></include>
 	<link rel="stylesheet" href="@styles/fonts/fonts.css">
 	<link rel="stylesheet" href="@styles/fonts/iconfont.css">

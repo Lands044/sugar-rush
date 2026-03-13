@@ -1,6 +1,6 @@
 .page {
     position: relative;
-    height: 100vh;
+    height: var(--app-height, 100dvh);
     background: url(../../../assets/img/bg_base.jpg) center / cover no-repeat;
     overflow: hidden;
 
@@ -41,7 +41,7 @@
 }
 
 .slot {
-    min-height: 100vh;
+    min-height: var(--app-height, 100dvh);
     display: flex;
     justify-content: center;
     align-items: flex-end;

@@ -16,7 +16,14 @@ html,
 body {
 	height: 100%;
 }
+html {
+	overflow: hidden;
+	height: -webkit-fill-available;
+}
 body {
+	overflow: hidden;
+	touch-action: pan-x pinch-zoom;
+	overscroll-behavior: none;
 	line-height: 1;
 	scrollbar-gutter: stable;
 	-ms-text-size-adjust: 100%;
