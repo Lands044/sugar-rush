@@ -2,12 +2,24 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<script>
+      (function () {
+        function setAppHeight() {
+          document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+        window.addEventListener('orientationchange', function () {
+          setTimeout(setAppHeight, 100);
+        });
+      })();
+		</script>
 		<link rel="shortcut icon" href="./assets/img/favicon.ico">
 		<title>Sugar Rush</title>
-		<script type="module" crossorigin="" src="./js/index.min.js?v=1773354982073"></script>
-		<link rel="modulepreload" crossorigin="" href="./js/common.min.js?v=1773354982073">
-		<link rel="stylesheet" crossorigin="" href="./css/index.min.css?v=1773354982073">
+		<script type="module" crossorigin="" src="./js/index.min.js?v=1773408056754"></script>
+		<link rel="modulepreload" crossorigin="" href="./js/common.min.js?v=1773408056754">
+		<link rel="stylesheet" crossorigin="" href="./css/index.min.css?v=1773408056754">
 	</head>
 	<body>
 		<div class="wrapper">
