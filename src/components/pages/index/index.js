@@ -1,6 +1,6 @@
 import "./sound.js";
 import { unlockAudioOnNextClick } from "./sound.js";
-import { openPopup, openAgePopup } from "./popup";
+import { openPopup, /* openAgePopup */ } from "./popup";
 
 /* ================= CONFIG ================= */
 const MOBILE_BREAKPOINT = 767.98;
@@ -41,11 +41,11 @@ let currentGrid = [];
 
 /* ================= START POPUP 18+ ================= */
 window.addEventListener("load", () => {
-    if (!localStorage.getItem("age_confirmed")) {
-        openAgePopup();
-    } else {
+    // if (!localStorage.getItem("age_confirmed")) {
+    //     openAgePopup();
+    // } else {
         unlockAudioOnNextClick();
-    }
+    // }
 });
 
 /* ================= BREAKPOINT DETECTION ================= */
