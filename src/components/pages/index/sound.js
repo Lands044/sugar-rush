@@ -1,14 +1,24 @@
+import { soundUrl } from "@js/config/assets.js";
+import { DEFAULT_CONFIG } from "@js/config/game.defaults.js";
+
 ////////////////////////////////////////////////////////// music
 // фонова музика
 const soundBtn = document.querySelector(".menu__sound");
 
-const bgMusic = new Audio("@/../../assets/sound/main_bg.mp3");
-bgMusic.loop = true;
-bgMusic.volume = 0.05;
+// src приходить з рантайм-конфігу — див. configureSound() нижче.
+// Гучність = рівень звуку тут × майстер-гучність sound.volume з конфігу.
+const BG_VOLUME = 0.05;
+const HOVER_VOLUME = 0.4;
+const SPIN_VOLUME = 0.6;
 
-const hoverSound = new Audio("@/../../assets/sound/btn_hover.mp3");
-hoverSound.volume = 0.4;
+const bgMusic = new Audio();
+bgMusic.loop = true;
+bgMusic.volume = BG_VOLUME;
+
+const hoverSound = new Audio();
+hoverSound.volume = HOVER_VOLUME;
 hoverSound.preload = "auto";
+let hoverVolume = HOVER_VOLUME;
 
 
 soundBtn.addEventListener("click", (e) => {
@@ -43,7 +53,7 @@ export function unlockAudio() {
         .then(() => {
             hoverSound.pause();
             hoverSound.currentTime = 0;
-            hoverSound.volume = 0.4;
+            hoverSound.volume = hoverVolume;
             audioUnlocked = true;
 
             if (!bgMusic.muted) {
@@ -83,8 +93,8 @@ document
     });
 
 //spin sound
-const spinSound = new Audio("@/../../assets/sound/btn_click.mp3");
-spinSound.volume = 0.6;
+const spinSound = new Audio();
+spinSound.volume = SPIN_VOLUME;
 spinSound.preload = "auto";
 
 let lastSpinTime = 0;
@@ -106,3 +116,36 @@ const spinBtn = document.querySelector(".menu__button-spin");
 spinBtn.addEventListener("click", () => {
     playSpinSound();
 });
+
+//////////////////////////////////////// конфіг
+// Застосовує sound-частину конфігу. Викликається на старті й на кожну зміну
+// конфігу (dev watcher / панель), тому src міняється лише якщо він інший —
+// інакше фонова музика перезапускалась би на кожен edit.
+function setSrc(audio, url) {
+    if (audio.dataset.src === url) return;
+    audio.dataset.src = url;
+    audio.src = url;
+}
+
+export function configureSound(config) {
+    const { sound, assets } = config;
+    const sounds = assets.sounds;
+    const defaults = DEFAULT_CONFIG.assets.sounds;
+
+    setSrc(bgMusic, soundUrl(sounds.background, defaults.background));
+    setSrc(hoverSound, soundUrl(sounds.hover, defaults.hover));
+    setSrc(spinSound, soundUrl(sounds.spin, defaults.spin));
+
+    bgMusic.volume = BG_VOLUME * sound.volume;
+    hoverVolume = HOVER_VOLUME * sound.volume;
+    if (audioUnlocked) hoverSound.volume = hoverVolume;
+    spinSound.volume = SPIN_VOLUME * sound.volume;
+
+    // sound.enabled = стартовий стан кнопки звуку; далі гравець перемикає сам.
+    const muted = !sound.enabled;
+    if (bgMusic.muted !== muted) {
+        bgMusic.muted = muted;
+        soundBtn.classList.toggle("muted", muted);
+        if (!muted && audioUnlocked) bgMusic.play().catch(() => {});
+    }
+}

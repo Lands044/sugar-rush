@@ -1,22 +1,23 @@
 import "./sound.js";
-import { unlockAudioOnNextClick } from "./sound.js";
-import { openPopup, /* openAgePopup */ } from "./popup";
+import { unlockAudioOnNextClick, configureSound } from "./sound.js";
+import { openPopup, closePopup, setPopupConfig, /* openAgePopup */ } from "./popup";
+import { loadConfig, watchConfig } from "@js/config/config.js";
+import { registerGameConfig } from "@js/config/normalize.js";
+import { renderLanding } from "./render.js";
+import { GAME_FIELDS } from "./devmenu.fields.js";
+
+// Wire the game's own normalizeConfig() hook in before loadConfig() runs.
+registerGameConfig();
 
 /* ================= CONFIG ================= */
+// Tied to index.scss — stays in code.
 const MOBILE_BREAKPOINT = 767.98;
 
-const ICON_PATH = "assets/img/icon/";
-const SYMBOLS = [
-    "pic_01.webp",
-    "pic_02.webp",
-    "pic_03.webp",
-    "pic_04.webp",
-    "pic_05.webp",
-    "pic_06.webp",
-    "pic_07.webp",
-    "pic_08.webp",
-    "pic_09.webp",
-];
+// Runtime config (public/config.json), set by mount() — see BOOTSTRAP below.
+let cfg = null;
+
+const iconPath = () => cfg.game.iconPath;
+const symbols = () => cfg.game.symbols;
 
 const WIN_TYPE = {
     NONE: "none",
@@ -29,6 +30,25 @@ const DROP_TIME = 100;
 const DROP_DELAY = 0.07;
 const DISAPPEAR_TIME = 450;
 const WIN_TIME = 1000;
+
+/* ================= TIMERS ================= */
+// Every game timeout goes through later(), so a config change (live reload /
+// config panel) can cancel whatever is still queued before restarting the game.
+const timers = new Set();
+
+function later(callback, time) {
+    const id = setTimeout(() => {
+        timers.delete(id);
+        callback();
+    }, time);
+    timers.add(id);
+    return id;
+}
+
+function clearTimers() {
+    timers.forEach((id) => clearTimeout(id));
+    timers.clear();
+}
 
 /* ================= ELEMENTS ================= */
 const drum = document.querySelector(".drum");
@@ -55,7 +75,8 @@ function isMobile() {
 
 /* ================= MOBILE SLOT MACHINE ================= */
 class MobileSlotMachine {
-    constructor() {
+    constructor(config) {
+
         this.drumSpinner = drum.querySelector(".drum__spinner");
         if (!this.drumSpinner) {
             this.drumSpinner = document.createElement("div");
@@ -68,7 +89,7 @@ class MobileSlotMachine {
 
         this.baseUrl = (import.meta.env.BASE_URL || "./");
 
-        this.icons = SYMBOLS.length;
+        this.icons = symbols().length;
         this.iconsPerReel = 60;
 
         this.config = {
@@ -79,45 +100,14 @@ class MobileSlotMachine {
             getIconStep: () => Math.floor((drum.offsetHeight - 2 * 10) / 3) + 10,
         };
 
-        /* predefined spin results for mobile */
-        this.predefinedResults = [
-            {
-                type: "loss",
-                winAmount: 0,
-                winLine: null,
-                result: [
-                    [4, 1, 7],
-                    [5, 2, 8],
-                    [7, 4, 3],
-                ],
-            },
-            {
-                type: "smallwin",
-                winAmount: 50,
-                winLine: [1, 1, 1],
-                result: [
-                    [2, 4, 5],
-                    [7, 4, 2],
-                    [4, 4, 8],
-                ],
-            },
-            {
-                type: "bigwin",
-                winAmount: 150,
-                winLine: [1, 1, 1],
-                result: [
-                    [8, 5, 7],
-                    [3, 8, 6],
-                    [6, 8, 4],
-                ],
-            },
-        ];
+        /* predefined spin results for mobile — cfg.game.mobile.spins */
+        this.predefinedResults = config.game.mobile.spins;
 
         this.createReels();
     }
 
     getIconSrc(iconNum) {
-        return ICON_PATH + SYMBOLS[(iconNum - 1) % SYMBOLS.length];
+        return iconPath() + symbols()[(iconNum - 1) % symbols().length];
     }
 
     createReels() {
@@ -156,6 +146,7 @@ class MobileSlotMachine {
     createIconEl(iconNum) {
         const div = document.createElement("div");
         div.className = "drum__image";
+        div.dataset.icon = iconNum;
         div.style.height = `${this.config.getIconHeight()}px`;
         const img = document.createElement("img");
         img.src = this.getIconSrc(iconNum);
@@ -190,7 +181,7 @@ class MobileSlotMachine {
         this.isSpinning = false;
 
         if (this.spinCount >= this.predefinedResults.length) {
-            setTimeout(() => openPopup(), 1500);
+            later(() => openPopup(), 1500);
         }
     }
 
@@ -200,9 +191,9 @@ class MobileSlotMachine {
 
         const promises = Array.from(columns).map((col, i) => {
             return new Promise((resolve) => {
-                setTimeout(() => {
+                later(() => {
                     this.spinColumn(col, result.result[i], duration);
-                    setTimeout(resolve, duration + i * 100);
+                    later(resolve, duration + i * 100);
                 }, i * 100);
             });
         });
@@ -226,17 +217,16 @@ class MobileSlotMachine {
         strip.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.1, 0.25, 1)`;
         strip.style.transform = `translateY(-${targetPos * iconStep}px)`;
 
-        setTimeout(() => strip.classList.remove("mobile-active"), duration - 200);
+        later(() => strip.classList.remove("mobile-active"), duration - 200);
     }
 
     findSequence(strip, targetIcons) {
-        const imgs = strip.querySelectorAll(".drum__image img");
+        // matched by data-icon rather than the file name, so symbols can be renamed in config
+        const imgs = strip.querySelectorAll(".drum__image");
         for (let i = imgs.length - targetIcons.length; i >= 0; i--) {
             let found = true;
             for (let j = 0; j < targetIcons.length; j++) {
-                const src = imgs[i + j]?.getAttribute("src") || "";
-                const match = src.match(/pic_0?(\d+)\.webp/);
-                const num = match ? parseInt(match[1]) : -1;
+                const num = Number(imgs[i + j]?.dataset.icon ?? -1);
                 if (num !== targetIcons[j]) { found = false; break; }
             }
             if (found) return i;
@@ -251,9 +241,9 @@ class MobileSlotMachine {
             const winDelay = result.type === "bigwin" ? 2000 : 1500;
 
             // disappear анімація перед очищенням
-            setTimeout(() => {
+            later(() => {
                 this.disappearWinIcons(result.winLine);
-                setTimeout(() => {
+                later(() => {
                     this.clearWinClasses();
                     spinning = false;
                     enableSpinButton();
@@ -407,7 +397,7 @@ class MobileSlotMachine {
 
 /* ================= DESKTOP HELPERS ================= */
 function randSymbol() {
-    return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    return symbols()[Math.floor(Math.random() * symbols().length)];
 }
 
 const ROWS = 7;
@@ -422,10 +412,9 @@ function enableSpinButton() {
     spinBtn.classList.remove("disabled");
 }
 
+// Scripted by cfg.game.desktop.spins (1-based spin count); past the end = none.
 function getWinType(count) {
-    if (count === 2) return WIN_TYPE.SMALL;
-    if (count === 3) return WIN_TYPE.BIG;
-    return WIN_TYPE.NONE;
+    return cfg.game.desktop.spins[count - 1] || WIN_TYPE.NONE;
 }
 
 function generateGrid() {
@@ -519,7 +508,7 @@ function renderLayer(layer, grid, animate = false) {
             inner.className = "drum__item-inner";
 
             const img = document.createElement("img");
-            img.src = ICON_PATH + symbol;
+            img.src = iconPath() + symbol;
             img.alt = "Icon game";
 
             inner.appendChild(img);
@@ -555,7 +544,7 @@ function animateLandingPerColumn() {
 
         const landingTime = DROP_TIME + colIndex * DROP_DELAY * 1000;
 
-        setTimeout(() => {
+        later(() => {
             const total = items.length;
             items.forEach((item, index) => {
                 const depth = (index + 1) / total;
@@ -572,7 +561,7 @@ function animateLandingPerColumn() {
 }
 
 function calculateClusterWin(cluster) {
-    return cluster.length * 10;
+    return cluster.length * cfg.game.clusterWinPerSymbol;
 }
 
 function createWinNumber(amount, x, y) {
@@ -584,9 +573,9 @@ function createWinNumber(amount, x, y) {
     document.body.appendChild(el);
 
     requestAnimationFrame(() => el.classList.add("show"));
-    setTimeout(() => {
+    later(() => {
         el.classList.add("hide");
-        setTimeout(() => el.remove(), 500);
+        later(() => el.remove(), 500);
     }, 900);
 }
 
@@ -655,7 +644,7 @@ function animateCascade(oldGridWithNulls, newGrid) {
             const inner = document.createElement("div");
             inner.className = "drum__item-inner";
             const img = document.createElement("img");
-            img.src = ICON_PATH + symbol;
+            img.src = iconPath() + symbol;
             img.alt = "Icon game";
             inner.appendChild(img);
             item.appendChild(inner);
@@ -709,7 +698,7 @@ function animateCascade(oldGridWithNulls, newGrid) {
 
     columns.forEach((col) => { void col.offsetHeight; });
 
-    setTimeout(() => {
+    later(() => {
         columns.forEach((col) => {
             col.querySelectorAll(".drum__item").forEach((item) => {
                 if (item.dataset.needsAnimation !== "false") {
@@ -743,10 +732,10 @@ function processCascade() {
         createWinNumber(win, x, y);
     });
 
-    setTimeout(() => {
+    later(() => {
         animateClusterDisappear(clusters);
 
-        setTimeout(() => {
+        later(() => {
             const oldGridWithNulls = currentGrid.map((col) => [...col]);
             clusters.forEach((cluster) => {
                 cluster.forEach(({ c, r }) => { oldGridWithNulls[c][r] = null; });
@@ -757,7 +746,7 @@ function processCascade() {
             animateCascade(oldGridWithNulls, newGrid);
             currentGrid = newGrid;
 
-            setTimeout(() => {
+            later(() => {
                 drum.classList.remove("cascading");
                 renderLayer(newLayer, currentGrid);
                 processCascade();
@@ -783,7 +772,7 @@ function spinDesktop() {
         col.style.animationDelay = `${i * DROP_DELAY}s`;
     });
 
-    setTimeout(() => {
+    later(() => {
         oldLayer.innerHTML = "";
 
         spinCount++;
@@ -794,16 +783,16 @@ function spinDesktop() {
         currentGrid = nextGrid;
 
         if (winType !== WIN_TYPE.NONE) {
-            setTimeout(() => processCascade(), 600);
+            later(() => processCascade(), 600);
         } else {
             spinning = false;
-            setTimeout(() => enableSpinButton(), 900);
+            later(() => enableSpinButton(), 900);
         }
 
         renderLayer(newLayer, nextGrid, true);
         currentGrid = nextGrid;
 
-        setTimeout(() => animateLandingPerColumn(), 300);
+        later(() => animateLandingPerColumn(), 300);
     }, DROP_TIME + COLS * DROP_DELAY * 1000);
 }
 
@@ -832,7 +821,7 @@ function initMobile() {
     const existingLayers = drum.querySelectorAll(".drum__layer");
     existingLayers.forEach((l) => (l.style.display = "none"));
 
-    mobileSlot = new MobileSlotMachine();
+    mobileSlot = new MobileSlotMachine(cfg);
 }
 
 function setupMode() {
@@ -875,6 +864,7 @@ window.addEventListener("resize", () => {
 /* ================= EVENTS ================= */
 spinBtn.addEventListener("click", (e) => {
     e.preventDefault();
+    if (!cfg) return; // config still loading
     if (isMobile()) {
         if (mobileSlot) mobileSlot.spin();
     } else {
@@ -883,4 +873,67 @@ spinBtn.addEventListener("click", (e) => {
 });
 
 /* ================= BOOTSTRAP ================= */
-setupMode();
+// Applies a config and (re)starts the game. Called once on load and again on
+// every config change (dev watcher / config panel), so an edit takes effect
+// without a rebuild or a page reload. The restart mirrors the resize handler.
+function mount(config) {
+    clearTimers();
+    closePopup();
+    document.querySelectorAll(".win-number").forEach((el) => el.remove());
+    drum.classList.remove("cascading");
+
+    cfg = config;
+    renderLanding(config);
+    setPopupConfig(config);
+    configureSound(config);
+
+    spinning = false;
+    spinCount = 0;
+    enableSpinButton();
+
+    if (mobileSlot) {
+        mobileSlot.destroy();
+        mobileSlot = null;
+    }
+
+    if (isMobile()) {
+        initMobile();
+    } else {
+        drum.querySelectorAll(".drum__layer").forEach((l) => (l.style.display = ""));
+        const ms = drum.querySelector(".drum__spinner");
+        if (ms) ms.remove();
+        initDesktop();
+    }
+}
+
+let devMenu = null;
+
+(async () => {
+    const config = await loadConfig();
+    mount(config);
+
+    // Editing public/config.json re-renders the landing in place — no build
+    // step, no page reload.
+    watchConfig(config, (next) => {
+        mount(next);
+        devMenu?.sync(next);
+    });
+
+    // Config editor panel — ships in production too (config.dev.menu controls
+    // it). In dev it writes straight to public/config.json; in a built
+    // preview/production it falls back to this browser's localStorage (see
+    // docs/config.md, "The config menu"). Use
+    // `import.meta.env.DEV && config.dev.menu` to make it dev-only.
+    if (config.dev.menu) {
+        const { initDevMenu, CORE_FIELDS } = await import("@js/config/devmenu.js");
+        // This game has no action-button label (the spin button is an image).
+        const coreFields = CORE_FIELDS.map(([legend, fields]) => [
+            legend,
+            fields.filter((f) => f.path !== "texts.actionButton"),
+        ]);
+        devMenu = await initDevMenu(config, (next) => mount(next), {
+            fields: [...GAME_FIELDS, ...coreFields],
+            title: "SUGAR RUSH",
+        });
+    }
+})();

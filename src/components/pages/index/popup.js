@@ -2,6 +2,13 @@ import p5 from "p5";
 import { unlockAudio } from "./sound.js";
 
 /* ================= POPUP & 18+ ================= */
+// Texts and CTA link for the win popup — set from the runtime config by index.js.
+let popupConfig = null;
+
+export function setPopupConfig(config) {
+    popupConfig = config;
+}
+
 const popup = document.querySelector(".popup");
 const popupTitle = popup.querySelector(".popup__title");
 const popupText = popup.querySelector(".popup__text");
@@ -155,10 +162,12 @@ function stopConfetti() {
 export function openPopup() {
     const popup = document.querySelector(".popup");
 
-    popupTitle.textContent = "Congratulations!";
-    popupText.textContent = "Ready to continue playing?";
-    popupBtn.textContent = "Download Now";
-    popupBtn.href = "#";
+    const { texts, cta } = popupConfig;
+    popupTitle.textContent = texts.popupTitle;
+    popupText.textContent = texts.popupText;
+    popupBtn.textContent = texts.ctaButton;
+    popupBtn.href = cta.url;
+    popupBtn.target = cta.target;
 
     setTimeout(() => {
         popup.classList.add("show");
