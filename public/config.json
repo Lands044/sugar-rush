@@ -3,7 +3,7 @@
 	"version": 1,
 	"game": {
 		"$comment": "credit/bet are shown as-is in the bottom menu. symbols = file names under iconPath; mobile results refer to them by 1-based index. desktop.spins: none | small | big, in order (past the end = none); the popup opens after a big spin. mobile.spins: type loss | smallwin | bigwin, winLine = row 0-2 per reel (null for loss), result = per reel top-to-bottom symbol numbers; the popup opens after the last one.",
-		"credit": "$100,000.00",
+		"credit": "$100,100.00",
 		"bet": "$2.00",
 		"iconPath": "assets/img/icon/",
 		"symbols": [

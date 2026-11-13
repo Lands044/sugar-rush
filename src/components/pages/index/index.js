@@ -5,6 +5,11 @@ import { loadConfig, watchConfig } from "@js/config/config.js";
 import { registerGameConfig } from "@js/config/normalize.js";
 import { renderLanding } from "./render.js";
 import { GAME_FIELDS } from "./devmenu.fields.js";
+// Static, not a dynamic import(): the build's add-version plugin loads the entry as
+// index.min.js?v=<time>, while a lazy devmenu chunk would import "./index.min.js"
+// without the query — a different URL, so the browser would run this whole module
+// a second time (two games, two config panels stacked on top of each other).
+import { initDevMenu, CORE_FIELDS } from "@js/config/devmenu.js";
 
 // Wire the game's own normalizeConfig() hook in before loadConfig() runs.
 registerGameConfig();
@@ -925,7 +930,6 @@ let devMenu = null;
     // docs/config.md, "The config menu"). Use
     // `import.meta.env.DEV && config.dev.menu` to make it dev-only.
     if (config.dev.menu) {
-        const { initDevMenu, CORE_FIELDS } = await import("@js/config/devmenu.js");
         // This game has no action-button label (the spin button is an image).
         const coreFields = CORE_FIELDS.map(([legend, fields]) => [
             legend,

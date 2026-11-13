@@ -1,0 +1,134 @@
+{
+	"$comment": "Runtime config for this landing. This file is served as-is from the public folder and is fetched by the page on every load, so editing it changes the landing WITHOUT a rebuild. Reload the page (or let the dev watcher pick it up) and the landing re-renders.",
+	"version": 1,
+	"game": {
+		"$comment": "credit/bet are shown as-is in the bottom menu. symbols = file names under iconPath; mobile results refer to them by 1-based index. desktop.spins: none | small | big, in order (past the end = none); the popup opens after a big spin. mobile.spins: type loss | smallwin | bigwin, winLine = row 0-2 per reel (null for loss), result = per reel top-to-bottom symbol numbers; the popup opens after the last one.",
+		"credit": "$100,100.00",
+		"bet": "$2.00",
+		"iconPath": "assets/img/icon/",
+		"symbols": [
+			"pic_01.webp",
+			"pic_02.webp",
+			"pic_03.webp",
+			"pic_04.webp",
+			"pic_05.webp",
+			"pic_06.webp",
+			"pic_07.webp",
+			"pic_08.webp",
+			"pic_09.webp"
+		],
+		"clusterWinPerSymbol": 10,
+		"desktop": {
+			"spins": [
+				"none",
+				"small",
+				"big"
+			]
+		},
+		"mobile": {
+			"spins": [
+				{
+					"type": "loss",
+					"winLine": null,
+					"result": [
+						[
+							4,
+							1,
+							7
+						],
+						[
+							5,
+							2,
+							8
+						],
+						[
+							7,
+							4,
+							3
+						]
+					]
+				},
+				{
+					"type": "smallwin",
+					"winLine": [
+						1,
+						1,
+						1
+					],
+					"result": [
+						[
+							2,
+							4,
+							5
+						],
+						[
+							7,
+							4,
+							2
+						],
+						[
+							4,
+							4,
+							8
+						]
+					]
+				},
+				{
+					"type": "bigwin",
+					"winLine": [
+						1,
+						1,
+						1
+					],
+					"result": [
+						[
+							8,
+							5,
+							7
+						],
+						[
+							3,
+							8,
+							6
+						],
+						[
+							6,
+							8,
+							4
+						]
+					]
+				}
+			]
+		}
+	},
+	"cta": {
+		"url": "#",
+		"target": "_self"
+	},
+	"texts": {
+		"popupTitle": "Congratulations!",
+		"popupText": "Ready to continue playing?",
+		"ctaButton": "Download Now",
+		"title": "Place your bets!",
+		"creditLabel": "Credit",
+		"betLabel": "Bet"
+	},
+	"sound": {
+		"enabled": true,
+		"volume": 1
+	},
+	"assets": {
+		"$comment": "Values are either a built-in key (a filename under src/assets/sound, no extension) or a URL. A URL starting with / , ./ , http:// or https:// is used verbatim, so you can drop custom audio into the public folder and point at it here.",
+		"sounds": {
+			"background": "main_bg",
+			"hover": "btn_hover",
+			"spin": "btn_click"
+		}
+	},
+	"dev": {
+		"$comment": "watch polls this file and re-renders the landing in place when it changes. menu enables the config editor panel (ships in production too, where it saves to this browser's localStorage).",
+		"watch": true,
+		"watchInterval": 1500,
+		"menu": true
+	}
+}
